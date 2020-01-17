@@ -2,12 +2,14 @@ import numpy as np
 import scipy as sp
 from model import Model
 
-
 identity_map = lambda x, y: x.T @ y
 dual_auto = 0
 cov_helper = lambda A: 0 if not A else np.linalg.inv(A)
+
+
 def splitter(A):
     return A[:, A.shape[1] - 1], A[:, A.shape[1] - 1:]
+
 
 def GramCalc(A, kernel):
     n = A.shape[0]
@@ -19,6 +21,7 @@ def GramCalc(A, kernel):
 
     return gram
 
+
 def KerVec(A, x, kernel):
     n = A.shape[0]
     new = x.shape[0]
@@ -29,6 +32,7 @@ def KerVec(A, x, kernel):
             result[j][i] = kernel(x[j], A[i])
 
     return result
+
 
 class LinearRegression(Model):
 
@@ -61,34 +65,36 @@ class LinearGaussianLS(LinearRegression):
         self.X = X
         if self.dual == dual_auto:
             self.dual = True if d >= n else False
-
         if not self.dual:
             self.weights = self.prior_mean + np.linalg.inv(
                 X.T @ self.error_covariance @ X + cov_helper(self.prior_covariance)) @ X.T @ np.linalg.inv(
                 self.error_covariance) @ (y - X @ self.prior_mean)
         else:
             Z = X @ sp.linalg.sqrtm(self.prior_covariance)
-            self.weights =  np.linalg.inv(GramCalc(Z, self.kernel)) @ (y - X @ self.prior_mean)
+            self.weights = np.linalg.inv(GramCalc(Z, self.kernel)) @ (y - X @ self.prior_mean)
 
-        #self.weights, self.bias = splitter(self.weights)
     def predict(self, X):
         if self.dual:
             X = np.vstack([X, np.ones(X.shape[1])])
             sqrt = sp.linalg.sqrtm(self.prior_covariance)
-            X = X @ sqrt # NEEDS TO BE LOOKED AT FOR CORRECTNESS
+            X = X @ sqrt  # NEEDS TO BE LOOKED AT FOR CORRECTNESS
             Z = self.X @ sp.linalg.sqrtm(self.prior_covariance)
-            return self.prior_mean +  KerVec(Z, X, self.kernel) @ self.weights
+            return X.T @ self.prior_mean + KerVec(Z, X, self.kernel) @ self.weights
         else:
             super().predict(X)
 
+
 class GLS(LinearGaussianLS):
     def __init__(self, error_covariance, dual=dual_auto, kernel=identity_map):
-        LinearGaussianLS.__init__(self, prior_mean=0, prior_covariance=0, error_covariance=error_covariance, dual=dual, kernel=kernel)
+        LinearGaussianLS.__init__(self, prior_mean=0, prior_covariance=0, error_covariance=error_covariance, dual=dual,
+                                  kernel=kernel)
 
     def train(self, X, y):
-        # see if there is a clean reduction to OLS that allows OLS method use
         n = X.shape[0]
         d = X.shape[1]
+
+        assert self.dual == dual_auto or (self.dual and d >= n) or ((not self.dual) and n >= d)
+
         if self.dual == dual_auto:
             self.dual = True if d >= n else False
 
@@ -96,10 +102,8 @@ class GLS(LinearGaussianLS):
             X = np.hstack(X, np.ones((n, 1)))
             self.X = X
             self.weights = np.linalg.inv(GramCalc(X, self.kernel)) @ y
-            #self.weights, self.bias = splitter(self.weights)
         else:
             super().train(X, y)
-
 
     def predict(self, X):
         if self.dual:
@@ -107,6 +111,7 @@ class GLS(LinearGaussianLS):
             return KerVec(self.X, X, self.kernel) @ self.weights
         else:
             super().predict(X)
+
 
 class WLS(GLS):
     def __init__(self, error_covariance, dual=dual_auto):
@@ -122,36 +127,27 @@ class OLS(WLS):
 
     def train(self, X, y):
         n = X.shape[0]
-        #d = X.shape[1]
-        #x = np.hstack((x, np.ones((n, 1))))
+        # d = X.shape[1]
+        # x = np.hstack((x, np.ones((n, 1))))
         self.error_covariance = np.identity(n)
         super().train(X, y)
-        """
-        if self.dual == dual_auto and n >= d:
-            self.dual = False
-        else:
-            self.dual = True
-
-        if not self.dual:
-            self.weights = np.matmul(np.linalg.inv(X.T @ X) @ X.T, y)
-        else:
-            self.weights = X.T @ np.linalg.inv(X @ X.T) @ y
-        """
 
 
 class TikhonovRegularization(LinearGaussianLS):
     def __init__(self, prior_mean, prior_covariance, dual=dual_auto, kernel=identity_map):
-        LinearGaussianLS.__init__(self, prior_mean=prior_mean, prior_covariance=prior_covariance, error_covariance=1, dual=dual)
+        LinearGaussianLS.__init__(self, prior_mean=prior_mean, prior_covariance=prior_covariance, error_covariance=1,
+                                  dual=dual, kernel=kernel)
 
     def train(self, X, y):
         n = X.shape[0]
         self.error_covariance = np.identity(n)
         super().train(X, y)
 
+
 class RidgeRegression(TikhonovRegularization):
 
     def __init__(self, alpha, dual=dual_auto, kernel=identity_map):
-        TikhonovRegularization.__init__(self, prior_mean=0, prior_covariance=alpha, dual= dual, kernel=kernel)
+        TikhonovRegularization.__init__(self, prior_mean=0, prior_covariance=alpha, dual=dual, kernel=kernel)
         self.dual = dual
         self.kernel = kernel
         self.alpha = alpha
@@ -159,21 +155,23 @@ class RidgeRegression(TikhonovRegularization):
     def train(self, X, y):
         d = X.shape[1]
         self.prior_covariance = self.alpha * np.identity(d)
-        super().train(X,y)
-        """
-        d = X.shape[1]
-        X = np.hstack((X, np.ones((n, 1))))
-        if self.dual == dual_auto and n >= d:
-            self.dual = False
-        else:
-            self.dual = True
+        super().train(X, y)
 
-        if not self.dual:
-            self.weights = np.matmul(np.linalg.inv(X.T @ X + self.alpha * np.identity(d)) @ X.T, y)
-        else:
-            self.weights = X.T @ np.linalg.inv(X @ X.T) @ y  # replace with kernel ridge regression solution
-            """
+
+class ConvexRegularizedLS(LinearRegression):
+    def __init__(self, regularizer):
+        pass
+
+    #TODO Train with gradient descent positive combinations of cvx functions cvx
 
 class TotalLS(LinearRegression):
 
-    def __init__(self):
+    def train(self, X, y):
+        n = X.shape[0]
+        X = np.hstack((X, np.ones(n)))
+        X_prime = np.hstack((X, y))
+        d = X.shape[1]
+        u, s, vh = np.linalg.svd(X_prime)
+        sing = s[d + 1]
+        self.weights = np.linalg.inv(X.T @ X - sing * np.identity(d)) @ X.T @ y
+
