@@ -1,12 +1,12 @@
-import sys
-sys.path.append('../../../neural_nets')
-sys.path.append('../../..')
-from neural_nets import *
-from loss_functions import *
-from training import *
-import seaborn as sns
-from utilities import *
+import numpy as np
+import npml
+from npml.neural_net.neural_nets import *
+from npml.neural_net.loss_functions import SoftmaxLoss
+from npml.optim.training import *
+from npml.utils.utilities import *
+from npml.model import Data
 import matplotlib.pyplot as plt
+import seaborn as sns
 sns.set()
 
 #Loads the data

@@ -1,1 +1,1 @@
-__all__=['model', 'neural_net', 'utils', 'optim', 'linear_model']
+__all__=['model', 'neural_net', 'utils', 'optim', 'linear_model', 'tree']

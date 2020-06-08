@@ -4,6 +4,8 @@ from npml.neural_net.neural_nets import *
 from npml.model import Data
 from npml.neural_net.loss_functions import MSELoss
 from npml.optim.training import GDOptimizer
+import seaborn as sns
+sns.set()
 print('done')
 
 #Defining a basic feedforward network
