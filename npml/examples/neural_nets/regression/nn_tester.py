@@ -1,11 +1,10 @@
-import sys
-sys.path.append('../../../neural_nets')
-sys.path.append('../../..')
-from neural_nets import *
-from loss_functions import *
-from training import *
-import seaborn as sns
-sns.set()
+import npml
+import numpy as np
+from npml.neural_net.neural_nets import *
+from npml.utils import *
+from npml.model import Data
+from npml.neural_net.loss_functions import MSELoss
+print('done')
 
 #Defining a basic feedforward network
 class FeedForward(Net):
