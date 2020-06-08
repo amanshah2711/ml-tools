@@ -1,7 +1,7 @@
 import npml
 import numpy as np
 from npml.neural_net.neural_nets import *
-from npml.utils import *
+from npml.utils.utilities import softmax
 from npml.model import Data
 from npml.neural_net.loss_functions import MSELoss
 print('done')
