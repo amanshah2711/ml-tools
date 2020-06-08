@@ -1,5 +1,97 @@
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.set()
 
+
+def softmax(X):
+    X = X.T
+    numer = np.exp(X - np.amax(X, axis=0))
+    return (numer / np.sum(numer, axis=0)).T
+
+def confusion_matrix(outputs, target):
+    #Assume same labels are used in predictions and given labels
+    num_classes = len(np.unique(target))
+    cm = np.zeros((num_classes, num_classes))
+    for i in range(len(target)):
+        cm[outputs[i]][target[i]] += 1
+    return cm
+
+def confusion_plot(outputs, target, outfile=None):
+    cm = confusion_matrix(outputs, target)
+    plot = sns.heatmap(cm, annot=True, cmap='Blues', fmt='g')
+    plt.xlabel('True Labels')
+    plt.ylabel('Predicted Labels')
+    plt.title('Confusion Matrix')
+    if outfile:
+        plot.figure.savefig(outfile, dpi=500)
+    return plot
+
+def sgd_update(param, dparam, config, prev):
+    if not config['configured']:
+        config.setdefault('learning_rate', 1e-3)
+        config['configured']=True
+    lr = config['learning_rate']
+    param -= lr * dparam
+
+def logits_to_classes(logits):
+    return np.argmax(logits, axis=1)
+
+def sgd_momentum_update(param, dparam, config, prev):
+    if not config['configured']:
+        config.setdefault('learning_rate', 1e-3)
+        config.setdefault('momentum', 0.9)
+        config['configured']=True
+    lr, momentum, prev_update= config['learning_rate'], config['momentum'], prev[config['index']]
+    update = momentum * prev_update - lr * dparam
+    config['velocity']=update
+    param += update
+    return update
+
+def rmsprop_update(param, dparam, config, prev):
+    if not config['configured']:
+        config.setdefault('learning_rate', 1e-3)
+        config.setdefault('decay', 0.9)
+        config.setdefault('epsilon', 1e-7)
+        config['configured']=True
+    lr, decay, eps, accum = config['learning_rate'], config['decay'], config['epsilon'], prev[config['index']]
+    accum = decay * accum + (1 - decay) * (dparam**2)
+    update = lr * dparam / np.sqrt(eps + accum)
+    param -= update
+    return accum
+
+def adagrad_update(param, dparam, config, prev):
+    if not config['configured']:
+        config.setdefault('learning_rate', 1e-2)
+        config.setdefault('epsilon', 1e-7)
+        config['configured']=True
+    lr, eps, accum = config['learning_rate'], config['epsilon'], prev[config['index']]
+    accum += dparam ** 2
+    update = lr * dparam / np.sqrt(accum + eps)
+    param -= update
+    return accum
+
+
+def adam_update(param, dparam, config, prev):
+    if not config['configured']:
+        config.setdefault('learning_rate', 1e-3)
+        config.setdefault('decay1', 0.9)
+        config.setdefault('decay2', 0.999)
+        config.setdefault('epsilon',1e-7)
+        for i in range(config['index'] + 1):
+            prev[i] = (1, 0, 0)
+        config['configured'] = True
+    lr, decay1, decay2, eps = config['learning_rate'], config['decay1'], config['decay2'], config['epsilon']
+    time_step, first_moment, second_moment = prev[config['index']]
+    first_moment = decay1 * first_moment + (1 - decay1) * dparam
+    second_moment = decay2 * second_moment + (1 - decay2) * (dparam ** 2)
+    first_unbias, second_unbias = first_moment / np.sqrt(1 - decay1 ** time_step), second_moment / np.sqrt(1 - decay2 ** time_step)
+    update = lr * first_unbias / (np.sqrt(second_unbias) + eps)
+    param -= update
+    return (time_step + 1, first_moment, second_moment)
+
+def accuracy(preds, labels):
+    return (len(labels) - np.count_nonzero(preds -  labels)) / len(labels)
 
 def entropy(y):
     """ Calculates entropy, in the information theoretic sense, of the input vector.
