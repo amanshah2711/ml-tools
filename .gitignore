@@ -9,3 +9,5 @@
 #Removing MacOS file managements files
 *.DS_Store
 
+*.pyc
+
