@@ -1,6 +1,6 @@
-from model import *
 import numpy as np
-from utilities import *
+from ..model import Loss
+from ..utils.utilities import *
 
 class MSELoss(Loss):
 

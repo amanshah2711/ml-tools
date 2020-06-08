@@ -1,0 +1,5 @@
+site_name: My Docs
+nav:
+        - Home: index.md
+        - Neural Networks: neural_net.md
+theme : readthedocs

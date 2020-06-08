@@ -1,10 +1,8 @@
-from model import *
-import sys
-sys.path.append('neural_nets/')
-from neural_nets import *
-from loss_functions import SoftmaxLoss
-from utilities import *
-from training import GDOptimizer, Trainer
+from ..model import Model
+from ..neural_net.neural_nets import *
+from ..neural_net.loss_functions import SoftmaxLoss
+from ..utils.utilities import *
+from ..optim.training import GDOptimizer, Trainer
 
 class LogisticRegression(Model):
 

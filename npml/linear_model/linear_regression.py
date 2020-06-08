@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-from model import Model
+from ..model import Model
 
 identity_map = lambda x, y: x.T @ y
 dual_auto = 0

@@ -1,5 +1,5 @@
-from model import Optimizer
-from utilities import *
+from ..model import Optimizer
+from ..utils.utilities import *
 
 class GDOptimizer(Optimizer):
 

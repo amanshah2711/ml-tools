@@ -1,7 +1,8 @@
 import numpy as np
-import sys
-sys.path.append('../')
-from model import *
+from ..model import Model
+
+#jkimport sys
+#sys.path.append('../')
 
 TRAIN = 'train'
 TEST = 'test'
