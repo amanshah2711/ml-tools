@@ -3,3 +3,9 @@
 /datasets/
 /__pycache__/
 
+#Removing swap files
+*.swp
+
+#Removing MacOS file managements files
+*.DS_Store
+
